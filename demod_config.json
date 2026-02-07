@@ -1,0 +1,6 @@
+{
+  "command": "",
+  "udp_host": "127.0.0.1",
+  "udp_port": 1234,
+  "sample_rate_hz": 8000000
+}
