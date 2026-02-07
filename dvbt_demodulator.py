@@ -11,6 +11,7 @@ from typing import Optional
 
 @dataclasses.dataclass
 class DemodConfig:
+    mode: str
     command: str
     udp_host: str = "127.0.0.1"
     udp_port: int = 1234
@@ -20,6 +21,7 @@ class DemodConfig:
     def load(cls, path: Path) -> "DemodConfig":
         data = json.loads(path.read_text(encoding="utf-8"))
         return cls(
+            mode=data.get("mode", "command"),
             command=data["command"],
             udp_host=data.get("udp_host", "127.0.0.1"),
             udp_port=data.get("udp_port", 1234),
@@ -40,9 +42,11 @@ class DvbtDemodulator:
     def _load_config(self) -> DemodConfig:
         if self.config_path.exists():
             return DemodConfig.load(self.config_path)
-        return DemodConfig(command="")
+        return DemodConfig(mode="command", command="")
 
     def validate(self) -> None:
+        if self.config.mode == "external":
+            return
         if not self.config.command:
             raise RuntimeError(
                 "Configura 'demod_config.json' con el comando del demodulador DVB-T."
@@ -54,6 +58,8 @@ class DvbtDemodulator:
             )
 
     def start(self, freq_mhz: float, bandwidth_mhz: float) -> None:
+        if self.config.mode == "external":
+            return
         self.stop()
         command = self.config.command.format(
             freq_hz=int(freq_mhz * 1_000_000),
@@ -65,6 +71,8 @@ class DvbtDemodulator:
         self._process = subprocess.Popen(command, shell=True)
 
     def stop(self) -> None:
+        if self.config.mode == "external":
+            return
         if self._process is None:
             return
         self._process.terminate()

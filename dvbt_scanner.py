@@ -40,6 +40,14 @@ class DvbtScanner:
 
     def scan(self, config: ScanConfig, stop_event) -> Iterator[Channel]:
         self._validate_tools()
+        if (
+            self.demodulator.config.mode == "external"
+            and config.start_mhz != config.end_mhz
+        ):
+            raise RuntimeError(
+                "Modo 'external': usa la misma frecuencia inicial y final "
+                "porque el demodulador externo no se retunea automáticamente."
+            )
 
         freq = config.start_mhz
         index = 1
